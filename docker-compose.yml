@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  mysqldb:
+    image: mysql:latest
+    restart: unless-stopped
+    networks:
+      - mynetwork
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=his
+    ports:
+      - "3307:3306"
+    volumes:
+      - db:/var/lib/mysql
+  his-be-docker:
+    depends_on:
+      - mysqldb
+    build:
+      context: .
+      dockerfile: Dockerfile
+#    restart: on-failure
+    networks:
+      - mynetwork
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_APPLICATION_JSON: '{
+        "spring.datasource.url"  : "jdbc:mysql://mysqldb:3306/his?useSSL=false&allowPublicKeyRetrieval=true",
+        "spring.datasource.username" : "root",
+        "spring.datasource.password" : "root",
+        "server.address" : "0.0.0.0",
+        "spring.jpa.properties.hibernate.dialect" : "org.hibernate.dialect.MySQL5InnoDBDialect",
+        "spring.jpa.properties.hibernate.format_sql" : "true",
+        "spring.jpa.hibernate.ddl-auto" : "update",
+        "spring.mail.host" : "smtp.gmail.com",
+        "spring.mail.port" : "587",
+        "spring.mail.username" : "hieunguyen08102001@gmail.com",
+        "spring.mail.password" : "qrppqzzslwnmooof",
+        "spring.mail.properties.mail.smtp.auth" : "true",
+        "spring.mail.properties.mail.smtp.starttls.enable" : "true"
+      }'
+#    volumes:
+#      - .m2:/root/.m2
+    stdin_open: true
+    tty: true
+
+  his-fe-docker:
+    build:
+      context: ../his-fe/.
+      dockerfile: Dockerfile
+    networks:
+      - mynetwork
+    ports:
+      - "8080:8080"
+
+volumes:
+  db:
+
+networks:
+  mynetwork:
